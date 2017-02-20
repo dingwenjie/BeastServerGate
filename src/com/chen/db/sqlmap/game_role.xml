@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="game_role"> 
+  <resultMap id="role_brief" type="com.chen.db.bean.Role" >
+    <id column="roleid" property="roleid" jdbcType="BIGINT" />
+    <result column="userid" property="userid" jdbcType="VARCHAR" />
+    <result column="area" property="area" jdbcType="INTEGER" />
+    <result column="level" property="level" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="INTEGER" />
+    <result column="icon" property="icon" jdbcType="VARCHAR"/>
+     <result column="roleindex" property="roleindex" jdbcType="INTEGER"/>
+  </resultMap>
+  
+  <select id="selectByUser" parameterType="java.util.Map" resultMap="role_brief">
+  	select roleid, userid, area, level, name, sex,icon,roleindex  from role where userid = #{userid,jdbcType=VARCHAR} 
+  </select>
+  
+  <select id="selectById" parameterType="Long" resultMap="role_brief">
+  	select roleid, userid, area, level, name, sex,icon,roleindex from role where roleid = #{roleid,jdbcType=BIGINT}
+  </select>
+  
+   <update id="update" parameterType="Long" >
+    update role
+      set deleted = 1 
+    where roleid = #{roleid,jdbcType=BIGINT}
+  </update>
+</mapper>

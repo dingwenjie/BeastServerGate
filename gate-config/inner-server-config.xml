@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<servers>
+	<server>
+		<server-name>网关内部游戏连接服务器</server-name>
+		<server-id>10001</server-id>
+		<server-port>8300</server-port>
+		<server-web>beast</server-web>
+	</server>
+</servers>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<servers>
+	<server>
+		<server-name>网关服务器1</server-name>
+		<server-id>20000</server-id>
+		<server-web>beast</server-web>
+		<server-mina-port>8000</server-mina-port>
+	</server>
+</servers>
