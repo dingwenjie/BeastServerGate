@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.ibatis.jdbc.Null;
+import org.apache.ibatis.reflection.wrapper.BeanWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.mina.core.session.IoSession;
@@ -21,6 +22,7 @@ import com.chen.login.message.req.ReqCreateCharacterToGameServerMessage;
 import com.chen.login.message.req.ReqLoginCharacterToGameServerMessage;
 import com.chen.login.message.res.ResCharacterInfosMessage;
 import com.chen.login.message.res.ResLoginMessage;
+import com.chen.login.message.res.ResPlayerQuitMessage;
 import com.chen.login.message.res.ResSubstituteMessage;
 import com.chen.player.structs.Player;
 import com.chen.player.structs.UserState;
@@ -512,6 +514,90 @@ public class PlayerManager
 		{
 			GateServer.getInstance().registerRole(session, playerId);
 		}
+	}
+	/**
+	 * 移除Player出游戏服务器
+	 * @param playerId
+	 * @return
+	 */
+	public void removePlayer(long playerId)
+	{
+		Player player = players.get(playerId);
+		if (player != null)
+		{
+			//移除User_Player的缓存
+			ConcurrentHashMap<String, Player> splayers = user_players.get(player.getCreateServer());
+			if (splayers != null)
+			{
+				splayers.remove(player.getUserid());
+			}
+			//移除当前玩家的状态
+			removeUserState(player.getCreateServer(), player.getUserid());
+			IoSession session = GateServer.getInstance().getSessionByUser(player.getCreateServer(),player.getUserid());
+			if (session != null)
+			{
+				if (session.containsAttribute("player_id"))
+				{
+					try {
+						long roleId = (long)session.removeAttribute("player_id");
+						GateServer.getInstance().removePlayerSession(roleId);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				if (session.containsAttribute("user_id"))
+				{
+					try 
+					{
+						String userId = (String)session.removeAttribute("user_id");
+						GateServer.getInstance().removeUserSession(userId);		
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				//关闭连接
+				SessionUtil.closeSession(session, "玩家退出游戏");
+			}
+		}
+	}
+	/**
+	 * 玩家退出游戏服务器
+	 * @param session
+	 */
+	public void quit(IoSession session)
+	{
+		String userId = (String)session.getAttribute("user_id");
+		int serverId = (int)session.getAttribute("server_id");
+		ConcurrentHashMap<String, Player> sPlayers = user_players.get(serverId);
+		if (sPlayers != null)
+		{
+			Player player = sPlayers.get(userId);
+			if (player != null)
+			{
+				quit(player,true);
+			}
+		}
+	}
+	/**
+	 * 发送玩家退出游戏消息给客户端
+	 * @param player
+	 * @param bForced
+	 */
+	public void quit(Player player,boolean bForced)
+	{
+		String userId = player.getUserid();
+		int serverId = player.getCreateServer();
+		
+		ResPlayerQuitMessage msg = new ResPlayerQuitMessage();
+		msg.bIsForced = 0;
+		msg.userId = player.getId();
+		int sessionId = 0;
+		IoSession session = GateServer.getInstance().getSessionByUser(serverId, userId);
+		if (session != null)
+		{
+			sessionId = (int)session.getAttribute("session_id");
+		}
+		MessageUtil.sendMessageToGameServer(player.getServer(), sessionId, msg);
 	}
 	/**
 	 * 根据角色id取得在线的角色实例

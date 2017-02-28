@@ -34,6 +34,7 @@ import com.chen.util.SessionUtil;
 public class GateServer extends MinaServer
 {
 	private static Logger log = LogManager.getLogger(GateServer.class);
+	
 	private static Logger innerCloselog = LogManager.getLogger("InnerSessionClose");
 	private static Logger messagelog = LogManager.getLogger("GateMessage");
 	// 默认Mina服务器配置文件
@@ -251,10 +252,70 @@ public class GateServer extends MinaServer
 		// TODO Auto-generated method stub
 		
 	}
+	private int lastCloseTime;
+	private int closeNum;
 	@Override
 	public void sessionClosed(IoSession session) {
-		this.log.info("玩家"+session+"离开了游戏");
-		
+		int time = (int)(System.currentTimeMillis());
+		if (lastCloseTime != time)
+		{
+			log.error("关闭连接数："+closeNum+",时间:"+lastCloseTime);
+			closeNum = 0;
+		}
+		closeNum++;
+		lastCloseTime = time;
+		//直接让玩家退出游戏服务器缓存
+		StringBuffer stringBuffer = new StringBuffer();
+		if (session.containsAttribute("session_ip"))
+		{
+			stringBuffer.append("IP:"+session.getAttribute("session_ip"));
+		}
+		if (session.containsAttribute("player_id"))
+		{
+			stringBuffer.append("Player:"+session.getAttribute("player_id"));
+		}
+		if (session.containsAttribute("user_id"))
+		{
+			stringBuffer.append("UserId:"+session.getAttribute("user_id"));
+		}
+		messagelog.debug(session+"nowtime:"+System.currentTimeMillis()+"close");
+		boolean quit = false;
+		synchronized(session)
+		{
+			if (session.containsAttribute("player_id"))
+			{
+				long roleId = (long)session.getAttribute("player_id");
+				Player player = PlayerManager.getInstance().getPlayer(roleId);
+				if (player == null)
+				{
+					log.error("玩家:"+roleId+"没有注册到游戏服务器");
+				}
+				else
+				{
+					PlayerManager.getInstance().quit(player, true);
+					quit = true;
+					
+					IoSession ioSession = player_session.get(roleId);
+					if (ioSession != null && ioSession.getId() == session.getId())
+					{
+						removePlayerSession(roleId);
+					}
+				}
+			}
+			if (session.containsAttribute("user_id"))
+			{
+				String userId = (String)session.getAttribute("user_id");
+				IoSession session1 = user_session.get(userId);
+				if (session1 != null && session.getId() == session1.getId())
+				{
+					user_session.remove(userId);
+					if (!quit)
+					{
+						PlayerManager.getInstance().quit(session);
+					}
+				}
+			}
+		}
 	}
 	@Override
 	protected void stop() {
