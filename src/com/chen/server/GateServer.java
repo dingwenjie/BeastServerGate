@@ -38,11 +38,11 @@ public class GateServer extends MinaServer
 	private static Logger innerCloselog = LogManager.getLogger("InnerSessionClose");
 	private static Logger messagelog = LogManager.getLogger("GateMessage");
 	// 默认Mina服务器配置文件
-	private static final String defaultMinaServerConfig = "gate-config/mina-server-config.xml";
+	private static final String defaultMinaServerConfig = "BeastServerGate/gate-config/mina-server-config.xml";
 	// 默认内部客户服务器配置文件
-	private static final String defaultClientServerConfig = "gate-config/client-server-config.xml";
-	private static final String defaultInnerServerConfig = "gate-config/Inner-server-config.xml";
-	private static final String defaultGameConfig = "gate-config/game-config.xml";
+	private static final String defaultClientServerConfig = "BeastServerGate/gate-config/client-server-config.xml";
+	private static final String defaultInnerServerConfig = "BeastServerGate/gate-config/Inner-server-config.xml";
+	private static final String defaultGameConfig = "BeastServerGate/gate-config/game-config.xml";
 	private static GameConfig config;
 	private static Object obj = new Object();
 	//玩家通信列表
